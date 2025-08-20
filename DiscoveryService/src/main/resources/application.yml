@@ -1,0 +1,8 @@
+server:
+  port: ${EUREKA_PORT:8761}
+eureka:
+  instance:
+    hostname: ${EUREKA_HOSTNAME:localhost}
+  client:
+    registerWithEureka: false
+    fetchRegistry: false

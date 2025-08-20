@@ -1,0 +1,25 @@
+server:
+  port: ${ORDERSERVICE_PORT:8082}
+
+spring:
+  application:
+    name: orderservice
+  datasource:
+    url: ${ORDERSERVICE_DB_URL:jdbc:postgresql://localhost:5432/orders_db}
+    username: ${ORDERSERVICE_DB_USER:postgres}
+    password: ${ORDERSERVICE_DB_PASS:postgresql}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: ${ORDERSERVICE_SHOW_SQL:true}
+    hibernate:
+      ddl-auto: ${ORDERSERVICE_DDL_AUTO:create}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    instance-id: ${spring.application.name}:${random.value}
+    prefer-ip-address: true
+    hostname: orderservice
