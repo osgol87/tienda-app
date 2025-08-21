@@ -15,8 +15,10 @@ public interface ProductRepository extends ElasticsearchRepository<Product, Stri
      */
     @Query("""
     {
-      "query_string": {
-        "query": "*?0*",
+      "multi_match": {
+        "query": "?0",
+        "type": "bool_prefix",
+        "fuzziness": "1",
         "fields": ["name", "brand", "category"]
       }
     }
