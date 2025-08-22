@@ -98,4 +98,13 @@ public class ProductsController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Endpoint de healthcheck para verificar el estado del servicio.
+     * @return Una respuesta simple indicando que el servicio está activo.
+     */
+    @GetMapping("/health")
+    public ResponseEntity<String> healthCheck() {
+        log.info("Health check endpoint was called");
+        return ResponseEntity.ok("Service is up and running");
+    }
 }
