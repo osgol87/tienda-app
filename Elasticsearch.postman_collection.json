@@ -1,0 +1,241 @@
+{
+	"info": {
+		"_postman_id": "d451bd78-8b53-40d0-9ac8-b11e84ca7061",
+		"name": "Elasticsearch",
+		"description": "Operaciones con Elasticsearch.\n\nPuedes usar esta colección JSON para realizar operaciones contra el cluster de Elasticsearch que hayas creado a través de Bonsai.io.\n\n**Recuerda añadir la URL de tu Elasticsearch en la sección \"Variables\" de la colección.**",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1091827"
+	},
+	"item": [
+		{
+			"name": "Indices",
+			"item": [
+				{
+					"name": "Obtener todos los indices",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{elasticsearch-host}}/_cat/indices",
+							"host": [
+								"{{elasticsearch-host}}"
+							],
+							"path": [
+								"_cat",
+								"indices"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mapping",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{elasticsearch-host}}/products/_mapping",
+							"host": [
+								"{{elasticsearch-host}}"
+							],
+							"path": [
+								"products",
+								"_mapping"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Documentos",
+			"item": [
+				{
+					"name": "Products Bulk",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-ndjson",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"create\": { } }\n{\"name\":\"React Runner\",\"brand\":\"Framework\",\"category\":\"Running\",\"short_description\":\"Ligeros y rápidos, ideales para desarrolladores veloces.\",\"long_description\":\"Diseñados con la última tecnología de amortiguación y una suela de alto rendimiento, los React Runner ofrecen una experiencia de carrera inigualable. Su tejido transpirable mantiene tus pies frescos.\",\"price\":120.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/react-runner-min.png\"}\n{ \"create\": { } }\n{\"name\":\"Vue Voyager\",\"brand\":\"Progressive\",\"category\":\"Casual\",\"short_description\":\"Estilo progresivo y comodidad para el día a día.\",\"long_description\":\"Los Vue Voyager combinan un diseño moderno con materiales de primera calidad. Perfectos para cualquier ocasión, desde una reunión casual hasta un paseo por la ciudad.\",\"price\":95.50,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/vue-voyager-min.png\"}\n{ \"create\": { } }\n{\"name\":\"Angular Striker\",\"brand\":\"Google Kicks\",\"category\":\"Training\",\"short_description\":\"Estructura robusta para entrenamientos intensos.\",\"long_description\":\"Con un soporte excepcional en el tobillo y una base sólida, los Angular Striker son tu mejor aliado en el gimnasio. Resisten los entrenamientos más duros gracias a su construcción reforzada.\",\"price\":110.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/angular-striker-min.png\"}\n{ \"create\": { } }\n{\"name\":\"Svelte Sprint\",\"brand\":\"Minimalist\",\"category\":\"Running\",\"short_description\":\"Ligereza y agilidad para los corredores minimalistas.\",\"long_description\":\"Los Svelte Sprint están diseñados para ofrecer una sensación de ligereza sin sacrificar el soporte. Su diseño minimalista permite una mayor libertad de movimiento.\",\"price\":105.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/svelte-sprint-min.png\"}\n{ \"create\": { } }\n{\"name\":\"Next.js Navigator\",\"brand\":\"Future Tech\",\"category\":\"Hiking\",\"short_description\":\"Preparados para cualquier aventura al aire libre.\",\"long_description\":\"Con una suela antideslizante y un diseño resistente al agua, los Next.js Navigator son perfectos para explorar la naturaleza. Su comodidad te permitirá caminar durante horas sin cansancio.\",\"price\":130.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/nextjs-navigator-min.png\"}\n{ \"create\": { } }\n{\"name\":\"Tailwind Trekker\",\"brand\":\"Utility\",\"category\":\"Casual\",\"short_description\":\"Versatilidad y estilo para el día a día.\",\"long_description\":\"Los Tailwind Trekker combinan un diseño elegante con una funcionalidad excepcional. Ideales para el uso diario, su comodidad y estilo los hacen imprescindibles en tu armario.\",\"price\":85.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/tailwind-trekker-min.png\"}\n{ \"create\": { } }\n{\"name\":\"Bootstrap Bounce\",\"brand\":\"Classic\",\"category\":\"Basketball\",\"short_description\":\"Estilo clásico con un toque moderno.\",\"long_description\":\"Los Bootstrap Bounce son perfectos para la cancha y para la calle. Con una amortiguación superior y un diseño atemporal, ofrecen el equilibrio perfecto entre rendimiento y estilo.\",\"price\":115.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/bootstrap-bounce-min.png\"}\n{ \"create\": { } }\n{\"name\":\"Ember Edge\",\"brand\":\"Fire Tech\",\"category\":\"Running\",\"short_description\":\"Tecnología de vanguardia para corredores exigentes.\",\"long_description\":\"Los Ember Edge están diseñados para ofrecer un rendimiento excepcional en cada carrera. Su tecnología avanzada proporciona una amortiguación superior y un soporte óptimo.\",\"price\":125.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/ember-edge-min.png\"}\n{ \"create\": { } }\n{\"name\":\"GraphQL Glide\",\"brand\":\"Data Driven\",\"category\":\"Casual\",\"short_description\":\"Comodidad y estilo inspirados en la tecnología.\",\"long_description\":\"Los GraphQL Glide combinan un diseño elegante con una comodidad excepcional. Ideales para el uso diario, su estilo moderno los convierte en una elección popular entre los amantes de la tecnología.\",\"price\":90.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/graphql-glide-min.png\"}\n{ \"create\": { } }\n{\"name\":\"TypeScript Trek\",\"brand\":\"Precision\",\"category\":\"Hiking\",\"short_description\":\"Precisión y durabilidad para aventuras al aire libre.\",\"long_description\":\"Los TypeScript Trek están diseñados para ofrecer un rendimiento excepcional en terrenos difíciles. Su construcción robusta y su suela antideslizante garantizan estabilidad y confort en cada paso.\",\"price\":140.00,\"image_url\":\"https://yjuopxbvxebot529.public.blob.vercel-storage.com/typescript-trek-min.png\"}\n",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{elasticsearch-host}}/products/_bulk",
+							"host": [
+								"{{elasticsearch-host}}"
+							],
+							"path": [
+								"products",
+								"_bulk"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Insertar",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"FirstName\":\"RICARDO\",\n   \"LastName\":\"ALONSO\",\n   \"Designation\":\"Software Architect\",\n   \"Salary\":\"1000000\",\n   \"DateOfJoining\":\"2014-01-13\",\n   \"Address\":\"8445 Green Street Morristown, NJ 07960\",\n   \"Gender\":\"Male\",\n   \"Age\":35,\n   \"MaritalStatus\":\"Married\",\n   \"Interests\":\"R/C Boats,Dolls,Cloud Watching,Animals/pets/dogs,Crocheting,Casino Gambling\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{elasticsearch-host}}/products/_doc",
+							"host": [
+								"{{elasticsearch-host}}"
+							],
+							"path": [
+								"products",
+								"_doc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener todos los registros",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{elasticsearch-host}}/products/_search",
+							"host": [
+								"{{elasticsearch-host}}"
+							],
+							"path": [
+								"products",
+								"_search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{elasticsearch-host}}/products/_doc/qkesXogB8M2vRuq9K_bD",
+							"host": [
+								"{{elasticsearch-host}}"
+							],
+							"path": [
+								"products",
+								"_doc",
+								"qkesXogB8M2vRuq9K_bD"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Búsqueda",
+			"item": [
+				{
+					"name": "Multi-Match Query",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"query\": {\n        \"multi_match\": {\n            \"query\": \"reac rum\",\n            \"type\": \"bool_prefix\",\n            \"fuzziness\": \"1\",\n            \"fields\": [\n                \"name\",\n                \"brand\",\n                \"category\"\n            ]\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{elasticsearch-host}}/products/_search",
+							"host": [
+								"{{elasticsearch-host}}"
+							],
+							"path": [
+								"products",
+								"_search"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{elasticsearch-pass}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{elasticsearch-user}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "elasticsearch-host",
+			"value": "https://ogonzalezl-6089145741.us-east-1.bonsaisearch.net:443"
+		},
+		{
+			"key": "elasticsearch-user",
+			"value": "orhmb20dea"
+		},
+		{
+			"key": "elasticsearch-pass",
+			"value": "91418fl69v"
+		}
+	]
+}

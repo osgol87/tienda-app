@@ -1,0 +1,496 @@
+{
+	"info": {
+		"_postman_id": "3ff1fd6c-bd96-4c1d-8546-0a70cd9ce6cc",
+		"name": "gateway-collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1091827"
+	},
+	"item": [
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Gets all products",
+					"protocolProfileBehavior": {
+						"protocolVersion": "auto"
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cache-Control",
+								"value": "no-cache",
+								"type": "text"
+							},
+							{
+								"key": "Postman-Token",
+								"value": "<calculated when request is sent>",
+								"type": "text"
+							},
+							{
+								"key": "Host",
+								"value": "<calculated when request is sent>",
+								"type": "text"
+							},
+							{
+								"key": "User-Agent",
+								"value": "PostmanRuntime/7.39.1",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "*/*",
+								"type": "text"
+							},
+							{
+								"key": "Accept-Encoding",
+								"value": "gzip, deflate, br",
+								"type": "text"
+							},
+							{
+								"key": "Connection",
+								"value": "keep-alive",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/productservice/products",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"productservice",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/productservice/products?search=casual",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"productservice",
+								"products"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "casual"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Gets product by Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/productservice/products/cxIeypgBTo8i77nQyMja",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"productservice",
+								"products",
+								"cxIeypgBTo8i77nQyMja"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Creates a product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Node.js Nomad\",\n    \"brand\": \"Runtime Kicks\",\n    \"category\": \"Casual\",\n    \"shortDescription\": \"Flexibles y asíncronos, para el día a día.\",\n    \"longDescription\": \"Construidos para la comodidad y el estilo, los Node.js Nomad son perfectos para cualquier desarrollador que valore la eficiencia y el diseño moderno.\",\n    \"price\": 99.99,\n    \"imageUrl\": \"nodejs-nomad-min.png\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/productservice/products",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"productservice",
+								"products"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Python Sprint",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Python Sprint\",\n  \"brand\": \"CodeRunner\",\n  \"category\": \"Running\",\n  \"shortDescription\": \"Velocidad interpretada, rendimiento asegurado.\",\n  \"longDescription\": \"Diseñados para quienes corren maratones de código y de calle, los Python Sprint combinan ligereza, transpirabilidad y un diseño que inspira agilidad.\",\n  \"price\": 109.50,\n  \"imageUrl\": \"python-sprint-min.png\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/productservice/products",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"productservice",
+										"products"
+									]
+								}
+							},
+							"_postman_previewlanguage": "",
+							"header": [],
+							"cookie": [
+								{
+									"expires": "Invalid Date"
+								}
+							],
+							"body": ""
+						},
+						{
+							"name": "Creates a product",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Green Gleam Glide\",\n  \"brand\": \"EcoStep NYC\",\n  \"category\": \"Casual\",\n  \"shortDescription\": \"Sostenibles, urbanos y con propósito.\",\n  \"longDescription\": \"Los Green Gleam Glide están hechos con materiales reciclados y procesos responsables. Ideales para emprendedores conscientes que caminan hacia un futuro más limpio.\",\n  \"price\": 89.99,\n  \"imageUrl\": \"green-gleam-glide-min.png\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/productservice/products",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"productservice",
+										"products"
+									]
+								}
+							},
+							"_postman_previewlanguage": "",
+							"header": [],
+							"cookie": [
+								{
+									"expires": "Invalid Date"
+								}
+							],
+							"body": ""
+						},
+						{
+							"name": "React Blaze",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"React Blaze\",\n  \"brand\": \"Frontend Fury\",\n  \"category\": \"Streetwear\",\n  \"shortDescription\": \"Diseño responsivo para cada paso.\",\n  \"longDescription\": \"Con una estética vibrante y una suela que absorbe impactos, los React Blaze son perfectos para quienes viven con energía y estilo en cada esquina de la ciudad.\",\n  \"price\": 119.00,\n  \"imageUrl\": \"react-blaze-min.png\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/productservice/products",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"productservice",
+										"products"
+									]
+								}
+							},
+							"_postman_previewlanguage": "",
+							"header": [],
+							"cookie": [
+								{
+									"expires": "Invalid Date"
+								}
+							],
+							"body": ""
+						},
+						{
+							"name": "CSS Whisper",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"CSS Whisper\",\n  \"brand\": \"StyleSheet Studio\",\n  \"category\": \"Formal\",\n  \"shortDescription\": \"Silencio visual, impacto total.\",\n  \"longDescription\": \"Los CSS Whisper ofrecen una silueta limpia y sofisticada, ideales para entornos profesionales donde el estilo sutil marca la diferencia.\",\n  \"price\": 129.99,\n  \"imageUrl\": \"css-whisper-min.png\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/productservice/products",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"productservice",
+										"products"
+									]
+								}
+							},
+							"_postman_previewlanguage": "",
+							"header": [],
+							"cookie": [
+								{
+									"expires": "Invalid Date"
+								}
+							],
+							"body": ""
+						},
+						{
+							"name": "JavaScript Volt",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"JavaScript Volt\",\n  \"brand\": \"Syntax Sneakers\",\n  \"category\": \"Limited Edition\",\n  \"shortDescription\": \"Dinámicos, eléctricos y únicos.\",\n  \"longDescription\": \"Inspirados en la energía del lenguaje más versátil del desarrollo web, los JavaScript Volt son una edición limitada que combina innovación y diseño disruptivo.\",\n  \"price\": 149.99,\n  \"imageUrl\": \"javascript-volt-min.png\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/productservice/products",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"productservice",
+										"products"
+									]
+								}
+							},
+							"_postman_previewlanguage": "",
+							"header": [],
+							"cookie": [
+								{
+									"expires": "Invalid Date"
+								}
+							],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Updates a product",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"React Runner\",\n    \"brand\": \"Framework\",\n    \"category\": \"Running\",\n    \"shortDescription\": \"Ligeros y rápidos, ideales para desarrolladores veloces.\",\n    \"longDescription\": \"Diseñados con la última tecnología de amortiguación y una suela de alto rendimiento, los React Runner ofrecen una experiencia de carrera inigualable. Su tejido transpirable mantiene tus pies frescos.\",\n    \"price\": 120.0,\n    \"imageUrl\": \"https://yjuopxbvxebot529.public.blob.vercel-storage.com/react-runner-min.png\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/productservice/products/pxL1xJgBTo8i77nQmJ5U",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"productservice",
+								"products",
+								"pxL1xJgBTo8i77nQmJ5U"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deletes a product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/productservice/products/11",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"productservice",
+								"products",
+								"11"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Creates Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderItems\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 2\n        },\n        {\n            \"productId\": 8,\n            \"quantity\": 1\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/orderservice/orders",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"orderservice",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Gets orders by Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/orderservice/orders/1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"orderservice",
+								"orders",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Gets orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/orderservice/orders",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"orderservice",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Gateway Routes",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/actuator/gateway/routes",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"actuator",
+						"gateway",
+						"routes"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "http://localhost:8762"
+		}
+	]
+}
