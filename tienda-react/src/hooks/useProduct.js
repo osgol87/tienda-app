@@ -21,7 +21,7 @@ export const useProduct = (id) => {
 
                 const apiUrl = (gatewayUrl && productsPath) ? `${gatewayUrl}${productsPath}` : 'http://localhost:8762/productservice/products';
 
-                const response = await fetch(`${apiUrl}/${id}`);
+                const response = await fetch(`${apiUrl}/${id}`, { credentials: 'include' });
                 if (!response.ok) {
                     throw new Error('Producto no encontrado');
                 }

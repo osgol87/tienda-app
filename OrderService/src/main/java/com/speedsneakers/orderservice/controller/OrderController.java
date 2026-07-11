@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import java.util.List;
+
 /**
  * Controlador para manejar las solicitudes relacionadas con las órdenes.
  */
@@ -39,35 +41,42 @@ public class OrderController {
      * @return Detalles de la orden creada.
      */
     @PostMapping
-    public ResponseEntity<OrderDto> createOrder(@RequestBody OrderRequestModel orderRequest) {
+    public ResponseEntity<OrderDto> createOrder(
+            @RequestBody OrderRequestModel orderRequest,
+            @RequestHeader("X-User-Id") String userId) {
 
-        OrderDto order = orderService.createOrder(orderRequest);
-        log.info("Orden creada con éxito: {}", order);
+        OrderDto order = orderService.createOrder(orderRequest, userId);
+        log.info("Orden creada con éxito para usuario {}: {}", userId, order);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     /**
-     * Obtiene todas las órdenes.
+     * Obtiene todas las órdenes del usuario autenticado.
      *
-     * @return Lista de todas las órdenes.
+     * @param userId Identificador del usuario desde el header inyectado por el Gateway.
+     * @return Lista de órdenes del usuario.
      */
     @GetMapping
-    public ResponseEntity<List<OrderDto>> getAllOrders() {
-        List<OrderDto> orders = orderService.getAllOrders();
+    public ResponseEntity<List<OrderDto>> getAllOrders(
+            @RequestHeader("X-User-Id") String userId) {
+        List<OrderDto> orders = orderService.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }
 
     /**
      * Obtiene una orden por su ID.
      *
-     * @param id ID de la orden a obtener.
+     * @param id     ID de la orden a obtener.
+     * @param userId Identificador del usuario desde el header inyectado por el Gateway.
      * @return Detalles de la orden.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDto> getOrderById(@PathVariable String id) {
+    public ResponseEntity<OrderDto> getOrderById(
+            @PathVariable String id,
+            @RequestHeader("X-User-Id") String userId) {
 
-        OrderDto order = orderService.getOrderById(id);
+        OrderDto order = orderService.getOrderById(id, userId);
         return ResponseEntity.ok(order);
     }
 }

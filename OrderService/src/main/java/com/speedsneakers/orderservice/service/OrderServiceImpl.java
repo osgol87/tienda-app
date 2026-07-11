@@ -13,7 +13,6 @@ import com.speedsneakers.orderservice.model.request.OrderRequestModel;
 import com.speedsneakers.orderservice.repository.OrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -56,17 +55,19 @@ public class OrderServiceImpl implements OrderService {
      * Crea una nueva orden.
      *
      * @param orderRequest Datos de la orden a crear.
+     * @param userId       Identificador del usuario autenticado.
      * @return Detalles de la orden.
      */
     @Override
     @Transactional
-    public OrderDto createOrder(OrderRequestModel orderRequest) {
+    public OrderDto createOrder(OrderRequestModel orderRequest, String userId) {
 
-        log.info("Creando una nueva orden con los datos: {}", orderRequest);
+        log.info("Creando una nueva orden para usuario {} con los datos: {}", userId, orderRequest);
 
         Order order = new Order();
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
+        order.setUserId(userId);
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -117,13 +118,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * Obtiene una orden por su identificador.
+     * Obtiene una orden por su identificador, verificando que pertenezca al usuario.
      *
-     * @param id Identificador de la orden.
+     * @param id     Identificador de la orden.
+     * @param userId Identificador del usuario autenticado.
      * @return Detalles de la orden.
      */
     @Override
-    public OrderDto getOrderById(String id) {
+    public OrderDto getOrderById(String id, String userId) {
 
         if (!StringUtils.hasLength(id)) {
             throw new IllegalArgumentException("El ID de la orden no puede estar vacío");
@@ -136,17 +138,24 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderNotFoundException(id);
         }
 
-        return convertToDtoWithDetails(optionalOrder.get());
+        Order order = optionalOrder.get();
+        if (!order.getUserId().equals(userId)) {
+            log.warn("Usuario {} intentó acceder a la orden {} de otro usuario", userId, id);
+            throw new OrderNotFoundException(id);
+        }
+
+        return convertToDtoWithDetails(order);
     }
 
     /**
-     * Obtiene todas las órdenes.
+     * Obtiene todas las órdenes del usuario autenticado.
      *
-     * @return Lista de todas las órdenes.
+     * @param userId Identificador del usuario autenticado.
+     * @return Lista de órdenes del usuario.
      */
     @Override
-    public List<OrderDto> getAllOrders() {
-        return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "orderDate"))
+    public List<OrderDto> getOrdersByUserId(String userId) {
+        return orderRepository.findByUserIdOrderByOrderDateDesc(userId)
                 .stream()
                 .map(this::convertToDto)
                 .toList();
@@ -164,7 +173,8 @@ public class OrderServiceImpl implements OrderService {
                 order.getId(),
                 order.getOrderDate(),
                 order.getStatus().toString(),
-                order.getTotalAmount()
+                order.getTotalAmount(),
+                order.getUserId()
         );
     }
 
@@ -180,7 +190,8 @@ public class OrderServiceImpl implements OrderService {
                 order.getId(),
                 order.getOrderDate(),
                 order.getStatus().toString(),
-                order.getTotalAmount()
+                order.getTotalAmount(),
+                order.getUserId()
         );
 
         for (OrderItem item : order.getOrderItems()) {

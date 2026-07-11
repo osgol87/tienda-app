@@ -2,7 +2,6 @@ package com.speedsneakers.productservice.service;
 
 
 import com.speedsneakers.productservice.model.dto.ProductDto;
-import com.speedsneakers.productservice.model.entity.Product;
 import com.speedsneakers.productservice.model.request.ProductRequest;
 
 import java.util.List;

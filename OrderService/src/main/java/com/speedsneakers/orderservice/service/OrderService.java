@@ -15,22 +15,25 @@ public interface OrderService {
      * Crea una nueva orden.
      *
      * @param orderRequest Datos de la orden a crear.
+     * @param userId       Identificador del usuario autenticado.
      * @return Detalles de la orden.
      */
-    OrderDto createOrder(OrderRequestModel orderRequest);
+    OrderDto createOrder(OrderRequestModel orderRequest, String userId);
 
     /**
-     * Obtiene una orden por su identificador.
+     * Obtiene una orden por su identificador, verificando que pertenezca al usuario.
      *
      * @param orderId Identificador de la orden.
+     * @param userId  Identificador del usuario autenticado.
      * @return Detalles de la orden.
      */
-    OrderDto getOrderById(String orderId);
+    OrderDto getOrderById(String orderId, String userId);
 
     /**
-     * Obtiene todas las órdenes.
+     * Obtiene todas las órdenes del usuario autenticado.
      *
-     * @return Lista de todas las órdenes.
+     * @param userId Identificador del usuario autenticado.
+     * @return Lista de órdenes del usuario.
      */
-    List<OrderDto> getAllOrders();
+    List<OrderDto> getOrdersByUserId(String userId);
 }

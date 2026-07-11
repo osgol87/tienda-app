@@ -17,8 +17,8 @@ services:
     ports:
       - "8762:8762"
     environment:
-      # Eureka se encuentra usando su nombre de servicio en la red compartida
       EUREKA_URL: http://eureka-server:8761/eureka/
+      JWT_SECRET: tienda-app-jwt-secret-key-change-this-in-production-please
     networks:
       - microservice-net
     depends_on:
@@ -62,13 +62,31 @@ services:
       - "8081:8081"
     environment:
       EUREKA_URL: http://eureka-server:8761/eureka/
-      ELASTICSEARCH_HOST: ogonzalezl-6089145741.us-east-1.bonsaisearch.net:443
-      ELASTICSEARCH_USER: orhmb20dea
-      ELASTICSEARCH_PASS: 91418fl69v
+      ELASTICSEARCH_HOST: vibrant-sassafras-1qpqwpy9.us-east-1.bonsaisearch.net:443
+      ELASTICSEARCH_USER: e8a1040b53
+      ELASTICSEARCH_PASS: acb720dba11a489a781b
     networks:
       - microservice-net
     depends_on:
       - eureka-server
+
+  user-service:
+    build: ./UserService
+    container_name: user-service-container
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      USERSERVICE_DB_URL: jdbc:postgresql://postgres-db:5432/postgres
+      USERSERVICE_DB_USER: postgres
+      USERSERVICE_DB_PASS: postgresql
+      USERSERVICE_DDL_AUTO: create
+      JWT_SECRET: tienda-app-jwt-secret-key-change-this-in-production-please
+    networks:
+      - microservice-net
+    depends_on:
+      - eureka-server
+      - postgres-db
 
   order-service:
     build: ./OrderService

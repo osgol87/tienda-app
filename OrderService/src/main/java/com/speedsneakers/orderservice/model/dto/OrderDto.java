@@ -33,6 +33,11 @@ public class OrderDto {
     private BigDecimal totalAmount;
 
     /**
+     * Identificador del usuario que creó la orden.
+     */
+    private String userId;
+
+    /**
      * Lista de items de la orden.
      */
     private List<OrderItemDto> orderItems;
@@ -59,6 +64,11 @@ public class OrderDto {
         this.orderDate = orderDate;
         this.status = status;
         this.totalAmount = totalAmount;
+    }
+
+    public OrderDto(Long id, LocalDateTime orderDate, String status, BigDecimal totalAmount, String userId) {
+        this(id, orderDate, status, totalAmount);
+        this.userId = userId;
     }
 
     /**

@@ -46,6 +46,12 @@ public class Order {
     private BigDecimal totalAmount;
 
     /**
+     * Identificador del usuario que creó la orden
+     */
+    @Column(name = "user_id", nullable = false)
+    private String userId;
+
+    /**
      * Lista de items de la orden
      */
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

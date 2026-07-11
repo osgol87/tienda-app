@@ -14,7 +14,7 @@ export const useOrders = () => {
                 const ordersPath = import.meta.env.VITE_API_ORDERS_URL;
                 const apiUrl = (gatewayUrl && ordersPath) ? `${gatewayUrl}${ordersPath}` : 'http://localhost:8762/orderservice/orders';
 
-                const response = await fetch(apiUrl);
+                const response = await fetch(apiUrl, { credentials: 'include' });
                 if (!response.ok) {
                     throw new Error('Error al obtener las órdenes');
                 }

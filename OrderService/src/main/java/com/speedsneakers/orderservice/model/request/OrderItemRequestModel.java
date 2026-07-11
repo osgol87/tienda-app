@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotNull;
 
 import lombok.*;
 
-import java.math.BigDecimal;
-
 /**
  * Modelo de datos de la solicitud de creación de un item de la orden.
  */

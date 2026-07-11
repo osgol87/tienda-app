@@ -15,7 +15,7 @@ export const useProducts = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(apiUrl);
+            const response = await fetch(apiUrl, { credentials: 'include' });
             if (!response.ok) {
                 throw new Error('Error al obtener los productos.');
             }

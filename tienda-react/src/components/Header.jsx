@@ -1,13 +1,17 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Header = ({ cartCount }) => {
 
-    // Estado para el término de búsqueda
     const [searchTerm, setSearchTerm] = React.useState('');
-
-    // Hook para navegación
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
 
     // Maneja el envío del formulario de búsqueda
     const handleSearch = (e) => {
@@ -38,8 +42,16 @@ const Header = ({ cartCount }) => {
                 <Link to="/products" className='header__link'>Todos los Productos</Link>
                 <Link to="/orders" className='header__link'>Mis Compras</Link>
                 <Link to="/cart" className='header__cart-link'>
-                    🛒 Carrito <span className='header__cart-count'>({cartCount})</span>
+                    Carrito <span className='header__cart-count'>({cartCount})</span>
                 </Link>
+                {user && (
+                    <span className='header__user'>
+                        Hola, {user.username}
+                        <button className='header__logout-btn' onClick={handleLogout}>
+                            Salir
+                        </button>
+                    </span>
+                )}
             </nav>
         </header>
     );

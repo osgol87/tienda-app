@@ -12,6 +12,10 @@ import './styles/styles.css'
 import { Analytics } from '@vercel/analytics/react'
 import OrderListPage from './pages/OrderListPage'
 import OrderDetailPage from './pages/OrderDetailPage'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import ProtectedRoute from './components/ProtectedRoute'
+import { AuthProvider } from './context/AuthContext'
 
 const SneakerStoreApp = () => {
   const navigate = useNavigate();
@@ -72,6 +76,7 @@ const SneakerStoreApp = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ orderItems }),
       });
 
@@ -96,14 +101,16 @@ const SneakerStoreApp = () => {
       <Header cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} />
       <main>
         <Routes>
-          <Route path='/' element={<HomePage onAddToCart={handleAddToCart} />} />
-          <Route path='/products' element={<ProductListPage onAddToCart={handleAddToCart} />} />
-          <Route path='/products/:id' element={<ProductDetailsPage onAddToCart={handleAddToCart} />} />
-          <Route path='/cart' element={<CartPage cartItems={cartItems} onRemoveFromCart={handleRemoveFromCart} onCheckout={handleCheckout} />} />
-          <Route path="/returns" element={<ReturnsPolicyPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/orders" element={<OrderListPage />} />
-          <Route path="/orders/:id" element={<OrderDetailPage />} />
+          <Route path='/login' element={<LoginPage />} />
+          <Route path='/register' element={<RegisterPage />} />
+          <Route path='/' element={<ProtectedRoute><HomePage onAddToCart={handleAddToCart} /></ProtectedRoute>} />
+          <Route path='/products' element={<ProtectedRoute><ProductListPage onAddToCart={handleAddToCart} /></ProtectedRoute>} />
+          <Route path='/products/:id' element={<ProtectedRoute><ProductDetailsPage onAddToCart={handleAddToCart} /></ProtectedRoute>} />
+          <Route path='/cart' element={<ProtectedRoute><CartPage cartItems={cartItems} onRemoveFromCart={handleRemoveFromCart} onCheckout={handleCheckout} /></ProtectedRoute>} />
+          <Route path="/returns" element={<ProtectedRoute><ReturnsPolicyPage /></ProtectedRoute>} />
+          <Route path="/contact" element={<ProtectedRoute><ContactPage /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute><OrderListPage /></ProtectedRoute>} />
+          <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
         </Routes>
       </main>
       <Footer />
@@ -114,7 +121,9 @@ const SneakerStoreApp = () => {
 
 const AppWrapper = () => (
   <Router>
-    <SneakerStoreApp />
+    <AuthProvider>
+      <SneakerStoreApp />
+    </AuthProvider>
   </Router>
 );
 

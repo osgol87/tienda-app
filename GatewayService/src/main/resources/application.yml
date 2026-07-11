@@ -15,7 +15,10 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: '*'
+            allowedOrigins:
+              - 'http://localhost:5173'
+              - 'http://localhost:4173'
+              - ${FRONTEND_URL:http://localhost:5173}
             allowedHeaders: '*'
             allowedMethods:
               - GET
@@ -23,6 +26,10 @@ spring:
               - PUT
               - DELETE
               - PATCH
+            allowCredentials: true
+jwt:
+  secret: ${JWT_SECRET:tienda-app-jwt-secret-key-change-this-in-production-please}
+
 eureka:
   client:
     registerWithEureka: true

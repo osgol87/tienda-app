@@ -19,7 +19,7 @@ export const useOrder = (id) => {
                 const ordersPath = import.meta.env.VITE_API_ORDERS_URL;
                 const apiUrl = (gatewayUrl && ordersPath) ? `${gatewayUrl}${ordersPath}` : 'http://localhost:8762/orderservice/orders';
 
-                const response = await fetch(`${apiUrl}/${id}`);
+                const response = await fetch(`${apiUrl}/${id}`, { credentials: 'include' });
                 if (!response.ok) {
                     throw new Error('Orden no encontrada');
                 }
