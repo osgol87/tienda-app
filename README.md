@@ -62,7 +62,7 @@ a los servicios de negocio.
                          │   Frontend (React)      │
                          │   tienda-react          │
                          └────────────┬────────────┘
-                                      │  HTTP / CORS + JWT (Bearer)
+                                      │  HTTP / CORS + JWT (cookie HttpOnly)
                                       ▼
                          ┌─────────────────────────────┐
                          │  Gateway Service  :8762     │
@@ -74,9 +74,9 @@ a los servicios de negocio.
             ▼                         ▼                          ▼
   ┌───────────────────┐    ┌───────────────────┐     ┌───────────────────┐
   │  User Service     │    │ Product Service   │     │  Order Service    │
-  │      :8083        │    │      :8081        │◄─ Feign ─│      :8082   │
-  │ (PostgreSQL,      │    │ (PostgreSQL /     │     │  (PostgreSQL)     │
-  │  JWT + BCrypt)    │    │  Elasticsearch)   │     └───────────────────┘
+  │      :8083        │    │  Elastic  :8081   │◄─ Feign ─│      :8082   │
+  │ (PostgreSQL,      │    │ (Elasticsearch)   │     │  (PostgreSQL)     │
+  │  JWT + BCrypt)    │    │                   │     └───────────────────┘
   └───────────────────┘    └───────────────────┘
             ▲                         ▲                          ▲
             │            Registro / descubrimiento               │
@@ -93,7 +93,7 @@ a los servicios de negocio.
 | `DiscoveryService` | 8761 | Registro y descubrimiento de servicios |
 | `GatewayService` | 8762 | Puerta de entrada, enrutamiento y validación de JWT |
 | `UserService` | 8083 | Dominio de usuarios y autenticación |
-| `ProductService` / `ProductServiceElastic` | 8081 | Dominio de catálogo |
+| `ProductServiceElastic` | 8081 | Dominio de catálogo |
 | `OrderService` | 8082 | Dominio de pedidos |
 
 ---
@@ -104,9 +104,9 @@ La aplicación descompone la lógica de negocio en **dominios independientes**, 
 un microservicio con su propio modelo de datos y almacenamiento. Esta separación garantiza que un
 dominio pueda evolucionar, escalar y desplegarse sin afectar a los demás.
 
-- **Aislamiento de datos:** el dominio de pedidos (`orders_db`), el de productos (`products_db`) y el
-  de usuarios (`users_db`) no comparten esquema entre sí; la única vía de acceso a datos ajenos es a
-  través de la API del servicio propietario.
+- **Aislamiento de datos:** el dominio de pedidos (`orders_db`), el de usuarios (`users_db`) y el de
+  productos (índice `products` en Elasticsearch) no comparten esquema entre sí; la única vía de acceso
+  a datos ajenos es a través de la API del servicio propietario.
 - **Independencia de despliegue:** cada microservicio dispone de su propio `Dockerfile` y se despliega
   como contenedor autónomo.
 - **Responsabilidad única:** cada servicio implementa un único contexto delimitado (*bounded context*).
@@ -135,17 +135,22 @@ Puerta de entrada única implementada con **Spring Cloud Gateway** sobre un stac
 - **Observabilidad** mediante Spring Boot Actuator (`GET /actuator/gateway/routes`).
 - Puerto: `8762` (parametrizable mediante `GATEWAY_PORT`).
 
-### 4.3. Product Service (Catálogo — versión relacional)
+### 4.3. Product Service Elastic (Catálogo)
 
-Microservicio de gestión del catálogo de productos con persistencia relacional.
+Microservicio de gestión del catálogo de productos, con búsqueda de texto completo como requisito de
+diseño.
 
 - **CRUD completo** de productos a través de una API REST.
 - Modelo de producto: identificador, nombre, marca, categoría, descripción corta, descripción larga,
   precio (`BigDecimal`) e imagen.
-- **Búsqueda relacional** mediante consulta JPA personalizada con coincidencias parciales (`LIKE`)
-  sobre nombre, marca y categoría.
-- Persistencia en **PostgreSQL** mediante Spring Data JPA / Hibernate.
+- **Búsqueda con tolerancia a errores** (*fuzzy search*) sobre nombre, marca y categoría (ver §5 para
+  el detalle del motor).
+- Persistencia documental en **Elasticsearch**, gestionado como servicio externo en **Bonsai Cloud**.
 - Puerto: `8081`.
+
+> El proyecto contó en una etapa anterior con una versión relacional del catálogo (`ProductService`,
+> sobre PostgreSQL, con búsqueda mediante `LIKE`). Esa versión fue retirada por completo del
+> repositorio; `ProductServiceElastic` es hoy la única implementación del dominio de catálogo.
 
 ### 4.4. Order Service (Pedidos)
 
@@ -162,32 +167,30 @@ Microservicio de gestión de pedidos del cliente.
 - Persistencia en **PostgreSQL** independiente (`orders_db`).
 - Puerto: `8082`.
 
-### 4.5. Product Service Elastic (Catálogo — versión con motor de búsqueda)
-
-Implementación alternativa del catálogo que sustituye la persistencia relacional por **Elasticsearch**
-(ver §5 para el detalle del motor de búsqueda). Es **intercambiable** con `ProductService`: ambos se
-registran en Eureka con el mismo nombre lógico (`productservice`) y exponen la misma API, por lo que el
-resto del sistema es agnóstico a la implementación de búsqueda subyacente.
-
-### 4.6. User Service (Usuarios y autenticación)
+### 4.5. User Service (Usuarios y autenticación)
 
 Microservicio responsable de la gestión de usuarios y de la **autenticación stateless** del sistema.
 
 - **Registro de usuarios** (`POST /auth/register`) e **inicio de sesión** (`POST /auth/login`) a
   través de una API REST.
-- Modelo de usuario: identificador, correo electrónico (único), contraseña, nombre y rol.
+- Modelo de usuario: identificador, nombre de usuario (único), correo electrónico (único), contraseña,
+  rol y fecha de creación.
 - **Almacenamiento seguro de credenciales:** las contraseñas se cifran con **BCrypt**; nunca se
   persisten ni se devuelven en texto plano.
-- **Emisión de JSON Web Tokens (JWT):** tras un inicio de sesión correcto, el servicio genera un token
-  firmado (con un secreto `JWT_SECRET` compartido con el Gateway) que el cliente adjunta en la
-  cabecera `Authorization: Bearer <token>` de las peticiones posteriores.
+- **Emisión de JSON Web Tokens (JWT):** tras un inicio de sesión o registro correcto, el servicio
+  genera un token firmado (con un secreto `JWT_SECRET` compartido con el Gateway) que se entrega al
+  cliente como **cookie `HttpOnly`** (`token`, vigencia de 24 horas), no en el cuerpo de la respuesta.
+  El cliente no necesita adjuntar manualmente ningún encabezado: el navegador reenvía la cookie en
+  cada petición posterior.
 - **Seguridad con Spring Security:** configuración *stateless* (sin sesión de servidor), con los
-  endpoints de registro e inicio de sesión expuestos públicamente y el resto protegidos.
-- Consulta del perfil del usuario autenticado mediante `GET /users/me`.
+  endpoints bajo `/auth/**` expuestos públicamente a nivel de este servicio (la protección real de
+  las rutas de negocio ocurre en el Gateway, ver §6).
+- Consulta del perfil del usuario autenticado mediante `GET /auth/me`, y cierre de sesión mediante
+  `POST /auth/logout` (invalida la cookie).
 - Persistencia en **PostgreSQL** independiente (`users_db`).
 - Puerto: `8083`.
 
-### 4.7. Frontend (tienda-react)
+### 4.6. Frontend (tienda-react)
 
 Interfaz de usuario de la tienda construida en **React**, que consume la API exclusivamente a través
 del Gateway.
@@ -227,12 +230,15 @@ La comunicación inter-servicio se realiza de forma **declarativa y balanceada**
 
 La seguridad se basa en **JWT** y se aplica de forma centralizada en el Gateway:
 
-1. El cliente se autentica contra el `UserService` (`POST /auth/login`) y recibe un **token JWT**
-   firmado.
-2. En cada petición posterior, el cliente adjunta el token en la cabecera
-   `Authorization: Bearer <token>`.
-3. El **Gateway valida la firma y la vigencia del token** mediante un filtro global. Las rutas
-   públicas (registro e inicio de sesión, y la consulta de productos) se permiten sin token.
+1. El cliente se autentica contra el `UserService` (`POST /auth/login` o `POST /auth/register`) y
+   recibe el token JWT como **cookie `HttpOnly`** (`token`), no en el cuerpo de la respuesta.
+2. En cada petición posterior, el navegador adjunta automáticamente esa cookie (el cliente React la
+   envía con `credentials: 'include'` en cada `fetch`); no hay un encabezado `Authorization` manual.
+3. El **Gateway valida la firma y la vigencia del token** mediante un filtro global
+   (`AuthenticationFilter`) que se ejecuta antes del enrutamiento. Las únicas rutas exentas de esta
+   validación son `/userservice/auth/login`, `/userservice/auth/register` y
+   `/userservice/auth/logout`; la consulta de productos **no** es pública y también exige una sesión
+   válida.
 4. Tras validar el token, el Gateway **extrae la identidad del usuario y la propaga** a los servicios
    internos a través de la cabecera `X-User-Id`, de modo que los servicios de negocio (p. ej.
    `OrderService`) confían en dicha cabecera para asociar las operaciones al usuario.
@@ -244,20 +250,18 @@ La seguridad se basa en **JWT** y se aplica de forma centralizada en el Gateway:
 El sistema aplica el patrón **database-per-service**: cada microservicio es el único propietario de su
 almacén de datos y nadie accede directamente al esquema de otro servicio (el acceso siempre es a
 través de su API). Conviven dos tecnologías de persistencia: **PostgreSQL** (relacional) para los
-dominios de usuarios, pedidos y la versión relacional del catálogo, y **Elasticsearch** (documental)
-para la versión del catálogo orientada a búsqueda.
+dominios de usuarios y pedidos, y **Elasticsearch** (documental) para el catálogo.
 
 | Servicio | Tecnología | Almacén | Esquema / Índice |
 |----------|------------|---------|------------------|
 | `UserService` | PostgreSQL | `users_db` | tabla `users` |
 | `OrderService` | PostgreSQL | `orders_db` | tablas `orders`, `order_items` |
-| `ProductService` | PostgreSQL | `products_db` | tabla `products` |
 | `ProductServiceElastic` | Elasticsearch | índice `products` | documento `Product` |
 
-> **Nota:** en el entorno local con Docker Compose, los servicios PostgreSQL comparten una misma
-> instancia de servidor (`postgres-container`); el aislamiento lógico se mantiene a nivel de dominio.
-> El esquema se genera automáticamente a partir de las entidades JPA mediante la propiedad
-> `hibernate.ddl-auto` (parametrizable por servicio, p. ej. `ORDERSERVICE_DDL_AUTO`).
+> **Nota:** en el entorno local con Docker Compose, `users_db` y `orders_db` corren en contenedores
+> PostgreSQL independientes (`users-db`, `orders-db`), cada uno con su propio volumen. El esquema se
+> genera automáticamente a partir de las entidades JPA mediante la propiedad `hibernate.ddl-auto`
+> (parametrizable por servicio, p. ej. `ORDERSERVICE_DDL_AUTO`).
 
 ### 7.1. Dominio de usuarios (`users_db`)
 
@@ -266,10 +270,11 @@ Tabla **`users`** — gestionada por `UserService`.
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | `id` | `BIGSERIAL` (PK) | Identificador del usuario |
+| `username` | `VARCHAR` (único) | Nombre de usuario |
 | `email` | `VARCHAR` (único) | Correo electrónico, usado como credencial de acceso |
 | `password` | `VARCHAR` | Contraseña cifrada con **BCrypt** (nunca en texto plano) |
-| `name` | `VARCHAR` | Nombre del usuario |
 | `role` | `VARCHAR` | Rol del usuario para autorización |
+| `created_at` | `TIMESTAMP` | Fecha de creación de la cuenta |
 
 ### 7.2. Dominio de pedidos (`orders_db`)
 
@@ -301,26 +306,10 @@ Tabla **`order_items`** — líneas del pedido (entidad `OrderItem`).
 > son *snapshots* tomados del catálogo al crear el pedido (vía OpenFeign, ver §6), lo que preserva la
 > información histórica aunque el producto cambie posteriormente.
 
-### 7.3. Dominio de catálogo — versión relacional (`products_db`)
-
-Tabla **`products`** — gestionada por `ProductService` (entidad `Product`).
-
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | `BIGSERIAL` (PK) | Identificador del producto |
-| `name` | `VARCHAR` | Nombre del producto |
-| `brand` | `VARCHAR` | Marca |
-| `category` | `VARCHAR` | Categoría |
-| `short_description` | `VARCHAR` | Descripción corta |
-| `long_description` | `VARCHAR` | Descripción larga |
-| `price` | `NUMERIC(10,2)` | Precio |
-| `image_url` | `VARCHAR` | URL de la imagen |
-
-### 7.4. Dominio de catálogo — versión documental (índice `products`)
+### 7.3. Dominio de catálogo (índice `products`)
 
 Índice **`products`** de Elasticsearch — gestionado por `ProductServiceElastic` (documento `Product`,
-`@Document(indexName = "products")`). Es **intercambiable** con la versión relacional (misma API y
-mismo nombre lógico en Eureka), pero su modelo está optimizado para búsqueda de texto completo.
+`@Document(indexName = "products")`), con un modelo optimizado para búsqueda de texto completo.
 
 | Campo | Tipo Elasticsearch | Indexado | Descripción |
 |-------|--------------------|:--------:|-------------|
@@ -345,8 +334,9 @@ mismo nombre lógico en Eureka), pero su modelo está optimizado para búsqueda 
 
 - Cada microservicio incluye su propio **`Dockerfile`**.
 - El fichero **`docker-compose.yml`** orquesta el entorno de desarrollo local completo (Eureka,
-  Gateway, User Service, Product Service, Order Service y PostgreSQL) sobre una red bridge dedicada
-  (`microservice-net`).
+  Gateway, User Service, Product Service Elastic, Order Service y las bases PostgreSQL de usuarios y
+  pedidos) sobre una red bridge dedicada (`microservice-net`). `ProductServiceElastic` se conecta
+  desde ahí al clúster de Elasticsearch gestionado externamente en Bonsai.
 
 ### 8.2. Despliegue en la nube (Azure Container Apps)
 
@@ -389,27 +379,29 @@ El script **`deploy-azure-tienda-app.sh`** automatiza el despliegue sobre **Azur
 ## 10. Catálogo de endpoints (API REST)
 
 Todas las peticiones se realizan a través del Gateway (`:8762`), que antepone el nombre del servicio a
-la ruta (p. ej. `/productservice/products`). Los endpoints marcados con 🔒 requieren un token JWT
-válido en la cabecera `Authorization: Bearer <token>`.
+la ruta (p. ej. `/productservice/products`). Los endpoints marcados con 🔒 requieren la cookie de
+sesión `token` (emitida por `UserService` y enviada automáticamente por el navegador); solo los tres
+endpoints de `/auth` listados a continuación quedan exentos de esa validación en el Gateway.
 
 ### Usuarios y autenticación
 
 | Método | Ruta | Descripción |
 |:------:|------|-------------|
-| `POST` | `/auth/register` | Registro de un nuevo usuario |
-| `POST` | `/auth/login` | Inicio de sesión; devuelve el token JWT |
-| `GET` | `/users/me` 🔒 | Perfil del usuario autenticado |
+| `POST` | `/auth/register` | Registro de un nuevo usuario; entrega la cookie `token` |
+| `POST` | `/auth/login` | Inicio de sesión; entrega la cookie `token` |
+| `POST` | `/auth/logout` | Cierre de sesión; invalida la cookie `token` |
+| `GET` | `/auth/me` 🔒 | Perfil del usuario autenticado |
 
 ### Productos
 
 | Método | Ruta | Descripción |
 |:------:|------|-------------|
-| `GET` | `/products` | Listado de productos (parámetro opcional `?search`) |
-| `GET` | `/products/{id}` | Consulta de un producto por identificador |
-| `POST` | `/products` | Alta de un nuevo producto |
-| `PUT` | `/products/{id}` | Actualización de un producto |
-| `DELETE` | `/products/{id}` | Baja de un producto |
-| `GET` | `/products/health` | Verificación de estado (solo versión Elastic) |
+| `GET` | `/products` 🔒 | Listado de productos (parámetro opcional `?search`) |
+| `GET` | `/products/{id}` 🔒 | Consulta de un producto por identificador |
+| `POST` | `/products` 🔒 | Alta de un nuevo producto |
+| `PUT` | `/products/{id}` 🔒 | Actualización de un producto |
+| `DELETE` | `/products/{id}` 🔒 | Baja de un producto |
+| `GET` | `/products/health` 🔒 | Verificación de estado del servicio |
 
 ### Pedidos
 
@@ -446,8 +438,9 @@ válido en la cabecera `Authorization: Bearer <token>`.
 docker-compose up --build
 ```
 
-Esto levanta el registro de servicios, el gateway, los servicios de usuario, producto y pedido, y la
-base de datos PostgreSQL sobre la red `microservice-net`.
+Esto levanta el registro de servicios, el gateway, los servicios de usuario, producto (conectado a
+Elasticsearch en Bonsai) y pedido, y las bases de datos PostgreSQL de usuarios y pedidos, sobre la red
+`microservice-net`.
 
 ### Despliegue en Azure
 
