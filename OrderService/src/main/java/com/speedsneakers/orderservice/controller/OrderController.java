@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import java.util.List;
-
 /**
  * Controlador para manejar las solicitudes relacionadas con las órdenes.
  */
