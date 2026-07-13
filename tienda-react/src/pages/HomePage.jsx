@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
 import ProductCard from '../components/ProductCard';
+import ErrorMessage from '../components/ErrorMessage';
 
 const HomePage = ({ onAddToCart }) => {
     
@@ -18,7 +19,7 @@ const HomePage = ({ onAddToCart }) => {
     }
 
     if (error) {
-        return <h2>Error: {error}</h2>;
+        return <ErrorMessage message={error} />;
     }
 
     return (

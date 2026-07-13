@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_ORDERS_URL } from '../config/api';
 
 export const useOrders = () => {
     const [orders, setOrders] = useState([]);
@@ -10,11 +11,7 @@ export const useOrders = () => {
             setLoading(true);
             setError(null);
             try {
-                const gatewayUrl = import.meta.env.VITE_API_GATEWAY_URL;
-                const ordersPath = import.meta.env.VITE_API_ORDERS_URL;
-                const apiUrl = (gatewayUrl && ordersPath) ? `${gatewayUrl}${ordersPath}` : 'http://localhost:8762/orderservice/orders';
-
-                const response = await fetch(apiUrl, { credentials: 'include' });
+                const response = await fetch(API_ORDERS_URL, { credentials: 'include' });
                 if (!response.ok) {
                     throw new Error('Error al obtener las órdenes');
                 }

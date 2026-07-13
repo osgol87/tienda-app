@@ -1,10 +1,5 @@
 import { useState, useCallback } from 'react';
-
-const getBaseApiUrl = () => {
-    const gatewayUrl = import.meta.env.VITE_API_GATEWAY_URL;
-    const productsPath = import.meta.env.VITE_API_PRODUCTS_URL;
-    return (gatewayUrl && productsPath) ? `${gatewayUrl}${productsPath}` : 'http://localhost:8762/productservice/products';
-};
+import { API_PRODUCTS_URL } from '../config/api';
 
 export const useProducts = () => {
     const [products, setProducts] = useState([]);
@@ -29,11 +24,10 @@ export const useProducts = () => {
     }, []);
 
     const handleGetProducts = useCallback(async (searchTerm = '') => {
-        const baseUrl = getBaseApiUrl();
         const cleanSearchTerm = searchTerm.trim();
         const apiUrl = cleanSearchTerm
-            ? `${baseUrl}?search=${encodeURIComponent(cleanSearchTerm)}`
-            : baseUrl;
+            ? `${API_PRODUCTS_URL}?search=${encodeURIComponent(cleanSearchTerm)}`
+            : API_PRODUCTS_URL;
         await fetchProducts(apiUrl);
     }, [fetchProducts]);
 

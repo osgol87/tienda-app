@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
 import ProductCard from '../components/ProductCard';
+import ErrorMessage from '../components/ErrorMessage';
 
 const ProductListPage = ({ onAddToCart }) => {
     // Hook para obtener los parámetros de la URL (para la búsqueda)
@@ -27,7 +28,7 @@ const ProductListPage = ({ onAddToCart }) => {
     }
 
     if (error) {
-        return <h2>Error: {error}</h2>;
+        return <ErrorMessage message={error} />;
     }
 
     return (

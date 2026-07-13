@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -16,11 +16,27 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
+import Notification from './components/Notification'
+import { API_ORDERS_URL } from './config/api'
 
 const SneakerStoreApp = () => {
   const navigate = useNavigate();
 
-  const [cartItems, setCartItems] = useState([])
+  const [notification, setNotification] = useState(null);
+
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const storedCart = localStorage.getItem('cartItems');
+      return storedCart ? JSON.parse(storedCart) : [];
+    } catch (error) {
+      console.error("Error al leer el carrito almacenado:", error);
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const handleAddToCart = (product) => {
     
@@ -52,7 +68,7 @@ const SneakerStoreApp = () => {
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
-      alert("Tu carrito está vacío.");
+      setNotification({ type: 'error', message: 'Tu carrito está vacío.' });
       return;
     }
 
@@ -65,13 +81,7 @@ const SneakerStoreApp = () => {
     }));
 
     try {
-      // Asumimos una URL para el servicio de órdenes similar a la de productos.
-      // Si es diferente, puedes ajustarla aquí.
-      const gatewayUrl = import.meta.env.VITE_API_GATEWAY_URL;
-      const ordersPath = import.meta.env.VITE_API_ORDERS_URL; // e.g., /orderservice/orders
-      const baseUrl = (gatewayUrl && ordersPath) ? `${gatewayUrl}${ordersPath}` : 'http://localhost:8762/orderservice/orders';
-
-      const response = await fetch(baseUrl, {
+      const response = await fetch(API_ORDERS_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,18 +96,23 @@ const SneakerStoreApp = () => {
 
       const newOrder = await response.json();
       setCartItems([]); // Limpia el carrito
-      alert(`Compra realizada con éxito. Número de la orden: ${newOrder.id}`);
+      setNotification({ type: 'success', message: `Compra realizada con éxito. Número de la orden: ${newOrder.id}` });
       navigate(`/orders/${newOrder.id}`); // Redirige al detalle de la nueva orden
 
     } catch (error) {
       console.error("Error en el checkout:", error);
-      alert(`Hubo un problema al procesar tu compra: ${error.message}`);
+      setNotification({ type: 'error', message: `Hubo un problema al procesar tu compra: ${error.message}` });
       throw error; // Relanzamos el error para que el componente CartPage pueda manejarlo
     }
   };
 
   return (
     <>
+      <Notification
+        type={notification?.type}
+        message={notification?.message}
+        onClose={() => setNotification(null)}
+      />
       <Header cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} />
       <main>
         <Routes>

@@ -1,23 +1,21 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { API_USERS_URL } from '../config/api'
 
 const AuthContext = createContext(null)
-
-const getGatewayUrl = () =>
-    import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8762'
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetch(`${getGatewayUrl()}/userservice/auth/me`, { credentials: 'include' })
+        fetch(`${API_USERS_URL}/auth/me`, { credentials: 'include' })
             .then(res => (res.ok ? res.json() : null))
             .then(data => { setUser(data); setLoading(false) })
             .catch(() => setLoading(false))
     }, [])
 
     const login = async (email, password) => {
-        const res = await fetch(`${getGatewayUrl()}/userservice/auth/login`, {
+        const res = await fetch(`${API_USERS_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -33,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     const register = async (username, email, password) => {
-        const res = await fetch(`${getGatewayUrl()}/userservice/auth/register`, {
+        const res = await fetch(`${API_USERS_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -49,7 +47,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     const logout = async () => {
-        await fetch(`${getGatewayUrl()}/userservice/auth/logout`, {
+        await fetch(`${API_USERS_URL}/auth/logout`, {
             method: 'POST',
             credentials: 'include',
         })

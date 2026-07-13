@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useProduct } from '../hooks/useProduct';
+import ErrorMessage from '../components/ErrorMessage';
 
 const ProductDetailPage = ({ onAddToCart }) => {
     // useParams se usa para obtener los parámetros de la URL
@@ -14,7 +15,7 @@ const ProductDetailPage = ({ onAddToCart }) => {
     }
 
     if (error) {
-        return <h2>Error: {error}</h2>;
+        return <ErrorMessage message={error} />;
     }
 
     if (!product) {

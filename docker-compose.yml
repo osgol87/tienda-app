@@ -77,7 +77,7 @@ services:
       USERSERVICE_DB_URL: jdbc:postgresql://users-db:5432/users_db
       USERSERVICE_DB_USER: postgres
       USERSERVICE_DB_PASS: postgresql
-      USERSERVICE_DDL_AUTO: create
+      USERSERVICE_DDL_AUTO: update
       JWT_SECRET: tienda-app-jwt-secret-key-change-this-in-production-please
     networks:
       - microservice-net
@@ -95,7 +95,7 @@ services:
       ORDERSERVICE_DB_URL: jdbc:postgresql://orders-db:5432/orders_db
       ORDERSERVICE_DB_USER: postgres
       ORDERSERVICE_DB_PASS: postgresql
-      ORDERSERVICE_DDL_AUTO: create
+      ORDERSERVICE_DDL_AUTO: update
     networks:
       - microservice-net
     depends_on:

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useOrders } from '../hooks/useOrders';
+import ErrorMessage from '../components/ErrorMessage';
 
 const OrderListPage = () => {
 
@@ -12,7 +13,7 @@ const OrderListPage = () => {
   }
   
   if (error) {
-    return <h2>Error: {error}</h2>;
+    return <ErrorMessage message={error} />;
   }
 
   return (
