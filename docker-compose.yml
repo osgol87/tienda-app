@@ -62,6 +62,7 @@ services:
       ELASTICSEARCH_HOST: vibrant-sassafras-1qpqwpy9.us-east-1.bonsaisearch.net:443
       ELASTICSEARCH_USER: e8a1040b53
       ELASTICSEARCH_PASS: acb720dba11a489a781b
+      JWT_SECRET: tienda-app-jwt-secret-key-change-this-in-production-please
     networks:
       - microservice-net
     depends_on:
@@ -96,6 +97,7 @@ services:
       ORDERSERVICE_DB_USER: postgres
       ORDERSERVICE_DB_PASS: postgresql
       ORDERSERVICE_DDL_AUTO: update
+      JWT_SECRET: tienda-app-jwt-secret-key-change-this-in-production-please
     networks:
       - microservice-net
     depends_on:

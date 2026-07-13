@@ -21,3 +21,6 @@ elasticsearch:
 loggin:
   level:
     tracer: TRACE
+
+jwt:
+  secret: ${JWT_SECRET:tienda-app-jwt-secret-key-change-this-in-production-please}
