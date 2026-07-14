@@ -1,12 +1,9 @@
 package com.speedsneakers.orderservice.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
 /**
  * Exception cuando una orden no es encontrada en la base de datos.
+ * El código de estado HTTP lo decide GlobalExceptionHandler, no esta clase.
  */
-@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Order not found")
 public class OrderNotFoundException extends RuntimeException {
 
     /**

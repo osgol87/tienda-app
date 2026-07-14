@@ -3,6 +3,7 @@ package com.speedsneakers.orderservice.controller;
 import com.speedsneakers.orderservice.model.dto.OrderDto;
 import com.speedsneakers.orderservice.model.request.OrderRequestModel;
 import com.speedsneakers.orderservice.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class OrderController {
      */
     @PostMapping
     public ResponseEntity<OrderDto> createOrder(
-            @RequestBody OrderRequestModel orderRequest,
+            @Valid @RequestBody OrderRequestModel orderRequest,
             @RequestHeader("X-User-Id") String userId) {
 
         OrderDto order = orderService.createOrder(orderRequest, userId);
