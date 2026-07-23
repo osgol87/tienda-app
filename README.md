@@ -26,12 +26,13 @@ sistema y las características técnicas avanzadas que lo sustentan.
 4. [Descripción de módulos](#4-descripción-de-módulos)
 5. [Motor de búsqueda avanzado](#5-motor-de-búsqueda-avanzado)
 6. [Comunicación entre servicios](#6-comunicación-entre-servicios)
-7. [Bases de datos y modelo de datos](#7-bases-de-datos-y-modelo-de-datos)
-8. [Infraestructura de despliegue](#8-infraestructura-de-despliegue)
-9. [Stack tecnológico](#9-stack-tecnológico)
-10. [Catálogo de endpoints (API REST)](#10-catálogo-de-endpoints-api-rest)
-11. [Herramientas de soporte y calidad](#11-herramientas-de-soporte-y-calidad)
-12. [Ejecución del proyecto](#12-ejecución-del-proyecto)
+7. [Manejo de excepciones](#7-manejo-de-excepciones)
+8. [Bases de datos y modelo de datos](#8-bases-de-datos-y-modelo-de-datos)
+9. [Infraestructura de despliegue](#9-infraestructura-de-despliegue)
+10. [Stack tecnológico](#10-stack-tecnológico)
+11. [Catálogo de endpoints (API REST)](#11-catálogo-de-endpoints-api-rest)
+12. [Pruebas automatizadas y calidad](#12-pruebas-automatizadas-y-calidad)
+13. [Ejecución del proyecto](#13-ejecución-del-proyecto)
 
 ---
 
@@ -56,6 +57,12 @@ El sistema sigue un patrón de microservicios con una **puerta de entrada única
 **registro de servicios** (*Service Registry*). El frontend en React consume la API exclusivamente a
 través del Gateway, que además **valida el token JWT** y propaga la identidad del usuario autenticado
 a los servicios de negocio.
+
+La validación del JWT ya no es responsabilidad exclusiva del Gateway: `OrderService` y
+`ProductServiceElastic` incorporan su propio filtro de Spring Security (`JwtAuthenticationFilter`) que
+revalida la firma y vigencia del token de forma independiente (ver §6, *defensa en profundidad*), de
+modo que un `X-User-Id` falsificado no pueda alcanzar un servicio interno si este quedara expuesto sin
+pasar por el Gateway.
 
 ```
                          ┌─────────────────────────┐
@@ -146,6 +153,12 @@ diseño.
 - **Búsqueda con tolerancia a errores** (*fuzzy search*) sobre nombre, marca y categoría (ver §5 para
   el detalle del motor).
 - Persistencia documental en **Elasticsearch**, gestionado como servicio externo en **Bonsai Cloud**.
+- **Validación independiente del JWT** mediante Spring Security (`SecurityConfig` +
+  `JwtAuthenticationFilter`): revalida la cookie `token` en cada petición y solo exime de esta
+  validación las rutas `/products/health` y `/actuator/**`.
+- **Manejo centralizado de excepciones** (`GlobalExceptionHandler`): un producto inexistente, una
+  petición de alta/edición inválida o una falla de comunicación con Elasticsearch responden con un
+  cuerpo de error consistente en lugar de un `500` genérico (ver §7).
 - Puerto: `8081`.
 
 > El proyecto contó en una etapa anterior con una versión relacional del catálogo (`ProductService`,
@@ -163,7 +176,15 @@ Microservicio de gestión de pedidos del cliente.
   obtenido de la cabecera `X-User-Id` que el Gateway propaga tras validar el JWT (ver §6). Esto
   habilita la consulta de los pedidos propios del cliente ("mis pedidos").
 - Estados del pedido modelados mediante enumeración (`OrderStatus`).
-- **Integración con el catálogo** mediante cliente OpenFeign (ver §6).
+- **Integración con el catálogo** mediante cliente OpenFeign (ver §6), cuyo `FeignConfig` reenvía la
+  cookie `token` de la petición original hacia `ProductServiceElastic`, que ahora exige un JWT válido
+  propio.
+- **Validación independiente del JWT** mediante Spring Security (`SecurityConfig` +
+  `JwtAuthenticationFilter`): revalida la cookie `token` en cada petición, igual que
+  `ProductServiceElastic` (ver §2 y §6).
+- **Manejo centralizado de excepciones** (`GlobalExceptionHandler`): una orden inexistente, una
+  solicitud inválida o una falla al consultar `ProductServiceElastic` vía Feign responden con un
+  cuerpo de error consistente en lugar de un `500` genérico (ver §7).
 - Persistencia en **PostgreSQL** independiente (`orders_db`).
 - Puerto: `8082`.
 
@@ -240,12 +261,41 @@ La seguridad se basa en **JWT** y se aplica de forma centralizada en el Gateway:
    `/userservice/auth/logout`; la consulta de productos **no** es pública y también exige una sesión
    válida.
 4. Tras validar el token, el Gateway **extrae la identidad del usuario y la propaga** a los servicios
-   internos a través de la cabecera `X-User-Id`, de modo que los servicios de negocio (p. ej.
-   `OrderService`) confían en dicha cabecera para asociar las operaciones al usuario.
+   internos a través de la cabecera `X-User-Id`.
+5. **Defensa en profundidad:** `OrderService` y `ProductServiceElastic` no confían ciegamente en la
+   cabecera `X-User-Id` inyectada por el Gateway. Cada uno incorpora su propio
+   `JwtAuthenticationFilter` (Spring Security) que vuelve a extraer la cookie `token` de la petición,
+   revalida su firma y vigencia, y **sobrescribe** `X-User-Id` con el valor real extraído del token
+   antes de que llegue al controlador. Así, si alguno de estos servicios quedara alcanzable sin pasar
+   por el Gateway (p. ej. por un puerto expuesto en `docker-compose.yml`), una cabecera `X-User-Id`
+   falsificada no podría suplantar a otro usuario.
+6. Cuando `OrderService` invoca a `ProductServiceElastic` mediante el cliente Feign, el
+   `FeignConfig` reenvía la cookie `token` de la petición original, de modo que la llamada interna
+   también supera la validación de JWT propia de `ProductServiceElastic`.
 
 ---
 
-## 7. Bases de datos y modelo de datos
+## 7. Manejo de excepciones
+
+Cada microservicio de negocio centraliza el tratamiento de errores en un `GlobalExceptionHandler`
+(`@RestControllerAdvice`), de modo que ninguna falla se traduce en un `500` genérico sin contexto para
+el cliente:
+
+| Servicio | Excepciones controladas | Respuesta |
+|----------|--------------------------|-----------|
+| `UserService` | Usuario ya existente, credenciales inválidas, errores de validación de campos (`@Valid`) | `409`, `401`, `400` respectivamente, con cuerpo `{"message": ...}` |
+| `ProductServiceElastic` | Producto no encontrado, ID o petición inválida, falla de comunicación con Elasticsearch (`DataAccessException`) | `404`, `400`, `503`, con cuerpo `{"message": ...}` |
+| `OrderService` | Orden no encontrada, errores de validación, ID no numérico, producto no encontrado o catálogo no disponible vía Feign (`FeignException`) | `404`, `400`, `503`, con cuerpo `{"message": ...}` |
+
+En todos los casos existe además un manejador de última instancia para `RuntimeException` que evita
+que una excepción no anticipada exponga una traza de pila al cliente, registrando el detalle en el log
+del servicio. En `OrderService`, una falla al invocar `ProductServiceElastic` vía Feign (tiempo de
+espera, `401` por un token vencido entre servicios, `5xx`, conexión rechazada) se traduce en un `503`
+con un mensaje de catálogo no disponible, en lugar de propagar el error crudo del cliente Feign.
+
+---
+
+## 8. Bases de datos y modelo de datos
 
 El sistema aplica el patrón **database-per-service**: cada microservicio es el único propietario de su
 almacén de datos y nadie accede directamente al esquema de otro servicio (el acceso siempre es a
@@ -263,7 +313,7 @@ dominios de usuarios y pedidos, y **Elasticsearch** (documental) para el catálo
 > genera automáticamente a partir de las entidades JPA mediante la propiedad `hibernate.ddl-auto`
 > (parametrizable por servicio, p. ej. `ORDERSERVICE_DDL_AUTO`).
 
-### 7.1. Dominio de usuarios (`users_db`)
+### 8.1. Dominio de usuarios (`users_db`)
 
 Tabla **`users`** — gestionada por `UserService`.
 
@@ -276,7 +326,7 @@ Tabla **`users`** — gestionada por `UserService`.
 | `role` | `VARCHAR` | Rol del usuario para autorización |
 | `created_at` | `TIMESTAMP` | Fecha de creación de la cuenta |
 
-### 7.2. Dominio de pedidos (`orders_db`)
+### 8.2. Dominio de pedidos (`orders_db`)
 
 Tabla **`orders`** — cabecera del pedido (entidad `Order`).
 
@@ -306,7 +356,7 @@ Tabla **`order_items`** — líneas del pedido (entidad `OrderItem`).
 > son *snapshots* tomados del catálogo al crear el pedido (vía OpenFeign, ver §6), lo que preserva la
 > información histórica aunque el producto cambie posteriormente.
 
-### 7.3. Dominio de catálogo (índice `products`)
+### 8.3. Dominio de catálogo (índice `products`)
 
 Índice **`products`** de Elasticsearch — gestionado por `ProductServiceElastic` (documento `Product`,
 `@Document(indexName = "products")`), con un modelo optimizado para búsqueda de texto completo.
@@ -328,9 +378,9 @@ Tabla **`order_items`** — líneas del pedido (entidad `OrderItem`).
 
 ---
 
-## 8. Infraestructura de despliegue
+## 9. Infraestructura de despliegue
 
-### 8.1. Contenedorización
+### 9.1. Contenedorización
 
 - Cada microservicio incluye su propio **`Dockerfile`**.
 - El fichero **`docker-compose.yml`** orquesta el entorno de desarrollo local completo (Eureka,
@@ -338,7 +388,7 @@ Tabla **`order_items`** — líneas del pedido (entidad `OrderItem`).
   pedidos) sobre una red bridge dedicada (`microservice-net`). `ProductServiceElastic` se conecta
   desde ahí al clúster de Elasticsearch gestionado externamente en Bonsai.
 
-### 8.2. Despliegue en la nube (Azure Container Apps)
+### 9.2. Despliegue en la nube (Azure Container Apps)
 
 El script **`deploy-azure-tienda-app.sh`** automatiza el despliegue sobre **Azure Container Apps**:
 
@@ -350,7 +400,7 @@ El script **`deploy-azure-tienda-app.sh`** automatiza el despliegue sobre **Azur
   directa).
 - Imágenes publicadas en **Docker Hub** (`osgol/*`).
 
-### 8.3. Servicios gestionados externos
+### 9.3. Servicios gestionados externos
 
 - **PostgreSQL** alojado en **Railway**.
 - **Elasticsearch** alojado en **Bonsai**.
@@ -360,7 +410,7 @@ El script **`deploy-azure-tienda-app.sh`** automatiza el despliegue sobre **Azur
 
 ---
 
-## 9. Stack tecnológico
+## 10. Stack tecnológico
 
 | Capa | Tecnologías |
 |------|-------------|
@@ -370,13 +420,15 @@ El script **`deploy-azure-tienda-app.sh`** automatiza el despliegue sobre **Azur
 | **Persistencia relacional** | Spring Data JPA, Hibernate, PostgreSQL |
 | **Seguridad y autenticación** | Spring Security, JWT (JSON Web Tokens), BCrypt |
 | **Motor de búsqueda** | Spring Data Elasticsearch, Elasticsearch 7.10.2 (Bonsai) |
-| **Frontend** | React |
+| **Frontend** | React 19, React Router 7 |
 | **Utilidades** | Lombok, Jakarta Validation, Spring Boot Actuator |
+| **Pruebas backend** | JUnit 5, Mockito, Spring Security Test, JaCoCo (cobertura) |
+| **Pruebas frontend** | Vitest, Testing Library (React), jsdom |
 | **Infraestructura** | Docker, Docker Compose, Azure Container Apps, Railway, Log Analytics |
 
 ---
 
-## 10. Catálogo de endpoints (API REST)
+## 11. Catálogo de endpoints (API REST)
 
 Todas las peticiones se realizan a través del Gateway (`:8762`), que antepone el nombre del servicio a
 la ruta (p. ej. `/productservice/products`). Los endpoints marcados con 🔒 requieren la cookie de
@@ -419,7 +471,34 @@ endpoints de `/auth` listados a continuación quedan exentos de esa validación 
 
 ---
 
-## 11. Herramientas de soporte y calidad
+## 12. Pruebas automatizadas y calidad
+
+### 12.1. Backend
+
+Cada microservicio de negocio cuenta con **pruebas unitarias** (JUnit 5 + Mockito) que cubren sus
+capas principales, con **JaCoCo** integrado en el ciclo de vida de Maven para el reporte de cobertura:
+
+| Servicio | Cobertura de pruebas |
+|----------|-----------------------|
+| `GatewayService` | Filtro de autenticación (`AuthenticationFilterTest`): rutas públicas, token ausente/ inválido/expirado, propagación de `X-User-Id`. |
+| `UserService` | Controlador de autenticación, servicio de autenticación (registro, login, credenciales inválidas), emisión/validación de JWT (`JwtServiceTest`) y manejador global de excepciones. |
+| `ProductServiceElastic` | Controlador de productos, servicio de productos, filtro de validación de JWT propio y manejador global de excepciones (incluida la caída de Elasticsearch). |
+| `OrderService` | Controlador de órdenes, servicio de órdenes (incluida la integración vía Feign con el catálogo), filtro de validación de JWT propio y manejador global de excepciones. |
+
+### 12.2. Frontend
+
+El frontend (`tienda-react`) incorpora pruebas unitarias y de integración de componentes con
+**Vitest** y **Testing Library**, ejecutables con `npm test` (`npm run test:coverage` para el reporte
+de cobertura). Cubren, entre otros:
+
+- **Componentes de UI:** `Header`, `Footer`, `NavLinks`, `UserMenu`, `CartLink`, `SearchForm`,
+  `ProductCard`, `Notification`, `ErrorMessage`, `Copyright`, `ProtectedRoute`.
+- **Páginas:** login, registro, catálogo, detalle de producto, carrito, listado y detalle de pedidos,
+  contacto y política de devoluciones.
+- **Lógica de datos:** hooks de acceso a la API (`useProduct`, `useProducts`, `useOrder`, `useOrders`),
+  el contexto de autenticación (`AuthContext`) y la configuración del cliente HTTP (`config/api`).
+
+### 12.3. Verificación manual de la API
 
 - **Colecciones Postman** para la verificación de la API:
   - `gateway-collection.postman_collection.json` — pruebas *end-to-end* a través del Gateway.
@@ -430,7 +509,7 @@ endpoints de `/auth` listados a continuación quedan exentos de esa validación 
 
 ---
 
-## 12. Ejecución del proyecto
+## 13. Ejecución del proyecto
 
 ### Entorno local con Docker Compose
 
