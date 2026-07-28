@@ -52,6 +52,7 @@ public class AuthController {
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         Cookie cookie = new Cookie("token", "");
         cookie.setHttpOnly(true);
+        cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);

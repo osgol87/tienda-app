@@ -1,0 +1,30 @@
+package com.speedsneakers.orderservice.config;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiConfig {
+
+    private static final String COOKIE_AUTH = "cookieAuth";
+
+    @Bean
+    public OpenAPI orderServiceOpenApi() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Order Service API")
+                        .description("Servicio de gestión de órdenes de la aplicación tienda react")
+                        .version("v1"))
+                .addSecurityItem(new SecurityRequirement().addList(COOKIE_AUTH))
+                .components(new Components()
+                        .addSecuritySchemes(COOKIE_AUTH, new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.COOKIE)
+                                .name("token")));
+    }
+}
