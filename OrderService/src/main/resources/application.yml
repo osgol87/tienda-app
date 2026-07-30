@@ -13,7 +13,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: ${ORDERSERVICE_SHOW_SQL:true}
     hibernate:
-      ddl-auto: ${ORDERSERVICE_DDL_AUTO:create}
+      ddl-auto: ${ORDERSERVICE_DDL_AUTO:update}
 
 eureka:
   client:

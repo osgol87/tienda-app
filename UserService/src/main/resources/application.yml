@@ -13,7 +13,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: ${USERSERVICE_SHOW_SQL:false}
     hibernate:
-      ddl-auto: ${USERSERVICE_DDL_AUTO:create}
+      ddl-auto: ${USERSERVICE_DDL_AUTO:update}
 
 jwt:
   secret: ${JWT_SECRET:tienda-app-jwt-secret-key-change-this-in-production-please}

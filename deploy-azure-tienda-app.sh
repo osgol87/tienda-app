@@ -1,38 +1,47 @@
 #!/bin/bash
+set -euo pipefail
 
-# NOTA: Este script asume que tienes instalado y configurado Azure CLI
-# Puedes instalarlo desde https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
-# Y que has iniciado sesión:
-# Si estás en un entorno sin interfaz gráfica (GUI), puedes usar el comando:
+# NOTA: Este script asume que se tiene instalado y configurado Azure CLI
+# Se puede instalar desde https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+# Y que se ha iniciado sesión:
+# Si se está en un entorno sin interfaz gráfica (GUI), se puede usar el comando:
 # az login --use-device-code
-# que te permite completar el proceso de inicio de sesión de forma completamente manual en un dispositivo diferente.
+# que permite completar el proceso de inicio de sesión de forma completamente manual en un dispositivo diferente.
 # 
-# También debes establecer la suscripción por defecto:
-# az account set --subscription "id-de-tu-suscripción"
-# Puedes listar las suscripciones disponibles con:
+# También se debe establecer la suscripción por defecto:
+# az account set --subscription "id-de-suscripción"
+# Se puede listar las suscripciones disponibles con:
 # az account list --output table
 
 # Variables personalizables
 resourceGroup="rg-unir-tienda-app"
-# Puede cambiar esto por "westeurope", "centralus", etc. Depende si esta disponible Container Apps en la region
-location="centralus"
+# Puede cambiar esto por "northcentralus", "centralus", "southcentralus", etc. Depende si esta disponible Container Apps en la region
+location="northcentralus"
 environment="env-unir-tienda-app"
 
+# Versión de la imagen de docker
+versionImage="3.0"
+
 # Imagenes de docker de los contenedores
-eurekaImage="docker.io/osgol/discovery-service:2.0"
-gatewayImage="docker.io/osgol/gateway-service:2.0"
-orderImage="docker.io/osgol/order-service:2.0"
-productImage="docker.io/osgol/product-service:2.0"
+eurekaImage="docker.io/osgol/discovery-service:$versionImage"
+gatewayImage="docker.io/osgol/gateway-service:$versionImage"
+orderImage="docker.io/osgol/order-service:$versionImage"
+productImage="docker.io/osgol/product-service:$versionImage"
+userImage="docker.io/osgol/user-service:$versionImage"
 
 # Variables de entorno de elasticsearch
-elasticSearchHost="ogonzalezl-6089145741.us-east-1.bonsaisearch.net:443"
-elasticSearchUser="orhmb20dea"
-elasticSearchPass="91418fl69v"
+elasticSearchHost="vibrant-sassafras-1qpqwpy9.us-east-1.bonsaisearch.net:443"
+elasticSearchUser="e8a1040b53"
+elasticSearchPass="acb720dba11a489a781b"
 
 # Variables de entorno de la base de datos
-databaseUrl="jdbc:postgresql://shuttle.proxy.rlwy.net:22278/railway"
-databaseUser="postgres"
-databasePass="GJXkIMzUdyOflLANbCAoZfSjAGQxJJdT"
+databaseOrderUrl="postgresql://thomas.proxy.rlwy.net:50761/railway"
+databaseOrderUser="postgres"
+databaseOrderPass="AEAefRaAwwZFUEusILEpzUWPkNgwHiNf"
+
+databaseUserUrl="postgresql://sakura.proxy.rlwy.net:38034/railway"
+databaseUserrUser="postgres"
+databaseUserPass="hCNqPqtDcwFmYXgiGkzVYRtQQbygrtPo"
 
 # Eliminar grupo de recursos si ya existe
 if az group exists --name $resourceGroup | grep -q true; then
@@ -132,9 +141,26 @@ az containerapp create \
   --cpu 0.75 --memory 1.5Gi \
   --env-vars \
     EUREKA_URL=$eurekaServer \
-    ORDERSERVICE_DB_URL=$databaseUrl \
-    ORDERSERVICE_DB_USER=$databaseUser \
-    ORDERSERVICE_DB_PASS=$databasePass \
+    ORDERSERVICE_DB_URL=$databaseOrderUrl \
+    ORDERSERVICE_DB_USER=$databaseOrderUser \
+    ORDERSERVICE_DB_PASS=$databaseOrderPass \
+
+echo "Desplegando User Service..."
+az containerapp create \
+  --name user-service \
+  --resource-group $resourceGroup \
+  --environment $environment \
+  --image $userImage \
+  --target-port 8083 \
+  --min-replicas 1 \
+  --ingress internal \
+  --cpu 0.75 --memory 1.5Gi \
+  --env-vars \
+    EUREKA_URL=$eurekaServer \
+    USERSERVICE_DB_URL=$databaseUserUrl \
+    USERSERVICE_DB_USER=$databaseUserrUser \
+    USERSERVICE_DB_PASS=$databaseUserPass \
+
 
 echo "Despliegue completado. Resumen de recursos en el grupo de recursos $resourceGroup:"
 az resource list \
