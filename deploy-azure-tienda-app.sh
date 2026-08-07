@@ -29,6 +29,9 @@ orderImage="docker.io/osgol/order-service:$versionImage"
 productImage="docker.io/osgol/product-service:$versionImage"
 userImage="docker.io/osgol/user-service:$versionImage"
 
+# URL de producción del frontend en Vercel (para CORS del gateway)
+frontendUrl="https://tienda-app-pearl.vercel.app"
+
 # Variables de entorno de elasticsearch
 elasticSearchHost="vibrant-sassafras-1qpqwpy9.us-east-1.bonsaisearch.net:443"
 elasticSearchUser="e8a1040b53"
@@ -111,7 +114,13 @@ az containerapp create \
   --min-replicas 1 \
   --ingress external \
   --cpu 0.75 --memory 1.5Gi \
-  --env-vars EUREKA_URL=$eurekaServer
+  --allowed-origins "*" \
+  --allowed-methods "*" \
+  --allowed-headers "*" \
+  --allow-credentials true \
+  --env-vars \
+    EUREKA_URL=$eurekaServer \
+    FRONTEND_URL=$frontendUrl
 
 echo "Desplegando Product Service..."
 az containerapp create \
