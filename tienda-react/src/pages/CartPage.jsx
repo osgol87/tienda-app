@@ -13,7 +13,7 @@ const CartPage = ({ cartItems, onRemoveFromCart, onCheckout }) => {
             await onCheckout();
             // No es necesario cambiar isCheckingOut a false en caso de éxito,
             // ya que seremos redirigidos a otra página.
-        } catch (error) {
+        } catch {
             // Si onCheckout falla, el error ya se muestra en una alerta.
             // Aquí solo re-habilitamos el botón.
             setIsCheckingOut(false);

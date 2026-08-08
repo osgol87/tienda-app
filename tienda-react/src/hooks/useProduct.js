@@ -3,14 +3,13 @@ import { API_PRODUCTS_URL } from '../config/api';
 
 export const useProduct = (id) => {
     const [product, setProduct] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!!id);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         if (!id) {
-            setLoading(false);
             return;
-        };
+        }
 
         const fetchProduct = async () => {
             setLoading(true);

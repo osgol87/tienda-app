@@ -3,12 +3,11 @@ import { API_ORDERS_URL } from '../config/api';
 
 export const useOrder = (id) => {
     const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!!id);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         if (!id) {
-            setLoading(false);
             return;
         }
 
