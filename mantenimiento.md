@@ -371,8 +371,13 @@ mantiene intacta aunque los contenedores se apaguen y se vuelvan a crear.
 No existe ningún volumen local que lo guarde ni que se pueda borrar por accidente desde este entorno. Lo
 que sí debe cuidarse es la configuración de acceso a ese servidor (usuario, contraseña y dirección,
 definidos en `docker-compose.yml`). Si el catálogo llegara a borrarse directamente desde Bonsai, el sistema
-vuelve a crear un índice vacío al reiniciar Product Service, pero **el proyecto no cuenta con un proceso
-para volver a cargar los productos automáticamente**; habría que hacerlo de forma manual.
+vuelve a crear un índice vacío al reiniciar Product Service, y ahora sí existe un proceso que lo recupera
+sin intervención manual: al arrancar, `ProductServiceElastic` revisa si el índice `products` está vacío y,
+de estarlo, lo llena automáticamente con el catálogo de referencia guardado en
+`src/main/resources/products-seed.json` (componente `ProductCatalogSeeder`). Si el índice ya tiene
+productos, esta carga automática no hace nada, precisamente para no duplicar información en cada reinicio.
+Antes, este mismo catálogo se cargaba a mano con una colección de Postman que hablaba directamente con
+Bonsai, saltándose por completo al microservicio.
 
 Es importante dejar claro que esta sección no describe una política de respaldo ya implementada: el
 proyecto no tiene copias de seguridad configuradas ni para PostgreSQL ni para Elasticsearch. La única
